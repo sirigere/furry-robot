@@ -18,7 +18,8 @@ import java.util.Scanner;
 import org.junit.Assert;
 
 /**
- * Extend the test class which needs to validate the tests against an input and output file
+ * helps to test if the test data is stored as files. This fixture can read those test files and pass the
+ * data to the program and validate the output from the program with the output file
  */
 public abstract class FileValidatingTestFixture {
     private Class<?> clazz;
@@ -68,6 +69,14 @@ public abstract class FileValidatingTestFixture {
     }
 
     /**
+     * Calling this method, would do the following <br/>
+     * <ol>
+     * <li>create an instance of the class being tested in other System Under Test (SUT).</li>
+     * <li>Open the test input file and pass this input to the instance of the SUT being tested</li>
+     * <li>Collect the test data produced by the SUT class</li>
+     * <li>Validate the output produced with that of the test output file</li>
+     * </ol>
+     * 
      * @param inputFile
      *            file to get the test data from
      * @param outputFile
