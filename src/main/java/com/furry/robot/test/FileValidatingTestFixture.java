@@ -25,7 +25,8 @@ public abstract class FileValidatingTestFixture {
     private String[] methodsToExecute = { "run", "main" };
 
     /**
-     * Custom path of the test folder where input files are stored
+     * Name of the input file with extension. Example 110101.inp. Override if any other custom
+     * location
      * 
      * @return
      */
@@ -33,14 +34,31 @@ public abstract class FileValidatingTestFixture {
 	return getFile(new File(System.getProperty("user.dir")), fileName);
     }
 
+    /**
+     * Name of the output file. Example : 110101.oup. Override if any other custom location
+     * 
+     * @param fileName
+     * @return
+     */
     protected File getOutputFile(final String fileName) {
 	return getFile(new File(System.getProperty("user.dir")), fileName);
     }
 
+    /**
+     * Most of the judges use main or run method, if you are using any other method, overide this to
+     * specify custom method.
+     * 
+     * @return
+     */
     protected String[] getMethodsToExecute() {
 	return methodsToExecute;
     }
 
+    /**
+     * Provide the class being validated
+     * 
+     * @param clazz
+     */
     public FileValidatingTestFixture(Class<?> clazz) {
 	this.clazz = clazz;
     }
@@ -49,18 +67,29 @@ public abstract class FileValidatingTestFixture {
 	return this.clazz;
     }
 
-    PrintStream consoleOutstream = System.out;
-    InputStream consoleInStream = System.in;
-
+    /**
+     * @param inputFile
+     *            file to get the test data from
+     * @param outputFile
+     *            file to validate the test output
+     * @throws IOException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws IllegalArgumentException
+     * @throws InvocationTargetException
+     */
     protected void validateProgramOutputFromFile(String inputFile, String outputFile) throws IOException, InstantiationException,
 	    IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+
+	PrintStream consoleOutstream = System.out;
+	InputStream consoleInStream = System.in;
 
 	try {
 	    ByteArrayOutputStream testOutStream = interceptTheProgramOutput();
 
 	    readInputFileContent(inputFile);
 
-	    executeMainMethod();
+	    executeEntryMethod();
 
 	    validateProgramOutputAgainstOutputfileContent(outputFile, testOutStream.toString());
 
@@ -88,7 +117,7 @@ public abstract class FileValidatingTestFixture {
 	br.close();
     }
 
-    private void executeMainMethod() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+    private void executeEntryMethod() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 	Object object = getClazz().newInstance();
 	if (object instanceof Runnable) {
@@ -118,6 +147,13 @@ public abstract class FileValidatingTestFixture {
 	return testOutStream;
     }
 
+    /**
+     * Recursively loop the directory for the file
+     * 
+     * @param parentDir
+     * @param fileToFetch
+     * @return
+     */
     private File getFile(File parentDir, final String fileToFetch) {
 	final List<File> directories = new ArrayList<File>();
 	File[] texFiles = parentDir.listFiles(new FileFilter() {
