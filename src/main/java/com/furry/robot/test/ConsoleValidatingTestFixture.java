@@ -23,7 +23,7 @@ import org.junit.ComparisonFailure;
  * helps to test if the test data is stored as files. This fixture can read those test files and
  * pass the data to the program and validate the output from the program with the output file
  */
-public abstract class FileValidatingTestFixture {
+public abstract class ConsoleValidatingTestFixture {
     private Class<?> clazz;
     private String[] methodsToExecute = { "run", "main" };
 
@@ -62,7 +62,7 @@ public abstract class FileValidatingTestFixture {
      * 
      * @param clazz
      */
-    public FileValidatingTestFixture(Class<?> clazz) {
+    public ConsoleValidatingTestFixture(Class<?> clazz) {
 	this.clazz = clazz;
     }
 
