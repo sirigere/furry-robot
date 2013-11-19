@@ -1,6 +1,7 @@
 package com.furry.robot.test;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
@@ -16,10 +17,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import org.junit.Assert;
+import org.junit.ComparisonFailure;
 
 /**
- * helps to test if the test data is stored as files. This fixture can read those test files and pass the
- * data to the program and validate the output from the program with the output file
+ * helps to test if the test data is stored as files. This fixture can read those test files and
+ * pass the data to the program and validate the output from the program with the output file
  */
 public abstract class FileValidatingTestFixture {
     private Class<?> clazz;
@@ -92,6 +94,7 @@ public abstract class FileValidatingTestFixture {
 
 	PrintStream consoleOutstream = System.out;
 	InputStream consoleInStream = System.in;
+	String programResult = null;
 
 	try {
 	    ByteArrayOutputStream testOutStream = interceptTheProgramOutput();
@@ -100,14 +103,25 @@ public abstract class FileValidatingTestFixture {
 
 	    executeEntryMethod();
 
-	    validateProgramOutputAgainstOutputfileContent(outputFile, testOutStream.toString());
+	    programResult = testOutStream.toString();
+	    validateProgramOutputAgainstOutputfileContent(outputFile, programResult);
 
+	}
+	catch (ComparisonFailure exception) {
+	    outputResultToConsole(outputFile, consoleOutstream, programResult);
+	    throw exception;
 	}
 	finally {
 	    System.setIn(consoleInStream);
 	    System.setOut(consoleOutstream);
 	}
 
+    }
+
+    private void outputResultToConsole(String outputFile, PrintStream consoleOutstream, String programResult) {
+	consoleOutstream.append("Test Result compared for the output file:" + outputFile + "\n");
+	consoleOutstream.append(programResult);
+	consoleOutstream.append("\n");
     }
 
     private void validateProgramOutputAgainstOutputfileContent(String outputFile, String result) throws FileNotFoundException, IOException {
@@ -126,22 +140,26 @@ public abstract class FileValidatingTestFixture {
 	br.close();
     }
 
-    private void executeEntryMethod() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-
-	Object object = getClazz().newInstance();
-	if (object instanceof Runnable) {
-	    Runnable runnable = (Runnable) object;
-	    runnable.run();
-	    return;
-	}
-	Method[] methods = getClazz().getMethods();
-	for (String methodName : getMethodsToExecute()) {
-	    for (Method method : methods) {
-		if (methodName.equals(method.getName())) {
-		    method.invoke(object, new Object[method.getParameterTypes().length]);
-		    return;
+    private void executeEntryMethod() throws InstantiationException, IllegalAccessException, IllegalArgumentException {
+	try {
+	    Object object = getClazz().newInstance();
+	    if (object instanceof Runnable) {
+		Runnable runnable = (Runnable) object;
+		runnable.run();
+		return;
+	    }
+	    Method[] methods = getClazz().getMethods();
+	    for (String methodName : getMethodsToExecute()) {
+		for (Method method : methods) {
+		    if (methodName.equals(method.getName())) {
+			method.invoke(object, new Object[method.getParameterTypes().length]);
+			return;
+		    }
 		}
 	    }
+	}
+	catch (InvocationTargetException e) {
+	    throw new RuntimeException(e.getCause());
 	}
     }
 
@@ -184,6 +202,35 @@ public abstract class FileValidatingTestFixture {
 		return returnFile;
 	}
 	return null;
+    }
+
+    public void sendStringAndValidateString(String inputstring, String outputString) throws FileNotFoundException, IOException,
+	    IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+
+	PrintStream consoleOutstream = System.out;
+	InputStream consoleInStream = System.in;
+	String programResult = null;
+
+	try {
+	    ByteArrayOutputStream testOutStream = interceptTheProgramOutput();
+
+	    InputStream arrayInputStream = new ByteArrayInputStream(inputstring.getBytes("UTF-8"));
+	    System.setIn(arrayInputStream);
+
+	    executeEntryMethod();
+
+	    programResult = testOutStream.toString();
+
+	    Assert.assertEquals(outputString, programResult);
+	}
+	catch (ComparisonFailure exception) {
+	    outputResultToConsole("input", consoleOutstream, programResult);
+	    throw exception;
+	}
+	finally {
+	    System.setIn(consoleInStream);
+	    System.setOut(consoleOutstream);
+	}
     }
 
 }
