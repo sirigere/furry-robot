@@ -89,7 +89,7 @@ public abstract class ConsoleValidatingTestFixture {
      * @throws IllegalArgumentException
      * @throws InvocationTargetException
      */
-    protected void validateProgramOutputFromFile(String inputFile, String outputFile) throws IOException, InstantiationException,
+    public void sendTestFileContentAndValidatedAgainstFileContent(String inputFile, String outputFile) throws IOException, InstantiationException,
 	    IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 
 	PrintStream consoleOutstream = System.out;
